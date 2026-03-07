@@ -1,17 +1,22 @@
 // ============================================================
 // SpeakButton — ElevenLabs CDN audio pronunciation button
-// Uses pre-generated British English audio from CDN
-// Falls back to Web Speech API if audioKey not found in map
+//
+// Uses playPhonicsAudio() which:
+//   - British English: fetches CDN audio as blob with audio/mpeg MIME type
+//     (fixes Safari/iOS where application/octet-stream blocks playback)
+//   - American English: uses Web Speech API with en-US voice
+//
+// Falls back to Web Speech API if audioKey not found in AUDIO_MAP.
 // ============================================================
 import { Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { AUDIO_MAP } from "@/lib/audioMap";
+import { playPhonicsAudio } from "@/lib/audioMap";
 
 interface SpeakButtonProps {
   /** Key into AUDIO_MAP (e.g. "m", "sh", "word_cat") */
   audioKey?: string;
-  /** Fallback text for Web Speech API if audioKey not in map */
+  /** Fallback text for Web Speech API if audioKey is not provided */
   text?: string;
   label?: string;
   size?: "sm" | "md" | "lg";
@@ -33,22 +38,22 @@ export default function SpeakButton({
     e.stopPropagation();
     if (isPlaying) return;
 
-    // Try ElevenLabs CDN audio first
     const key = audioKey || "";
-    const url = key ? AUDIO_MAP[key] : undefined;
 
-    if (url) {
+    if (key) {
+      // playPhonicsAudio handles both British (CDN blob) and American (Web Speech)
       setIsPlaying(true);
-      const audio = new Audio(url);
-      audio.onended = () => setIsPlaying(false);
-      audio.onerror = () => setIsPlaying(false);
-      audio.currentTime = 0;
-      await audio.play().catch(() => setIsPlaying(false));
+      try {
+        await playPhonicsAudio(key);
+      } finally {
+        // Keep button active for a short visual feedback window
+        setTimeout(() => setIsPlaying(false), 600);
+      }
       return;
     }
 
-    // Fallback: Web Speech API
-    const speakText = text || audioKey || "";
+    // No audioKey — use Web Speech API with fallback text
+    const speakText = text || "";
     if (speakText && "speechSynthesis" in window) {
       setIsPlaying(true);
       window.speechSynthesis.cancel();

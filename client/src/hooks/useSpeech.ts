@@ -3,6 +3,7 @@
 // Supports en-GB (British) and en-US (American) English
 // ============================================================
 import { useState, useCallback, useEffect, useRef } from "react";
+import { setAudioAccent } from "@/lib/audioMap";
 
 export type AccentType = "en-GB" | "en-US";
 
@@ -30,8 +31,15 @@ export function useSpeech() {
     }
   }, []);
 
+  // Sync audioMap singleton on mount (picks up any saved localStorage value)
+  useEffect(() => {
+    const saved = (localStorage.getItem("rwi-accent") as AccentType) || "en-GB";
+    setAudioAccent(saved);
+  }, []);
+
   const changeAccent = useCallback((newAccent: AccentType) => {
     setAccent(newAccent);
+    setAudioAccent(newAccent); // keep audioMap singleton in sync
     localStorage.setItem("rwi-accent", newAccent);
   }, []);
 

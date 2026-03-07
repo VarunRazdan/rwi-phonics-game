@@ -2,6 +2,14 @@
 // audioMap.ts — Pre-generated ElevenLabs CDN audio URLs
 // Voice: Alice (British English, Educational)
 // All 89 sounds pre-generated and hosted on CDN for instant playback
+//
+// Audio strategy:
+//   British English → ElevenLabs CDN (Alice voice, pre-generated)
+//   American English → Web Speech API (en-US, browser built-in)
+//
+// CDN MIME type fix: CDN serves files as application/octet-stream.
+// We fetch as blob and create a blob:// URL with audio/mpeg MIME type
+// so all browsers (incl. Safari, iOS) can play them correctly.
 // ============================================================
 
 const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310419663027077078/hWFp5C696d56ZEubd2aADg";
@@ -102,49 +110,179 @@ export const AUDIO_MAP: Record<string, string> = {
   "word_ring": `${CDN}/word_ring_fe437da9.mp3`,
 };
 
+// ── Phonics sound text map for Web Speech API fallback ────────
+// Maps audio keys to the phoneme text that should be spoken aloud
+// (not the letter name, but the actual sound)
+export const SOUND_TEXT_MAP: Record<string, string> = {
+  "m": "mmm", "a": "ah", "s": "sss", "d": "duh", "t": "tuh",
+  "i": "ih", "n": "nnn", "p": "puh", "g": "guh", "o": "oh",
+  "c": "kuh", "k": "kuh", "u": "uh", "b": "buh", "f": "fff",
+  "e": "eh", "l": "lll", "h": "huh", "sh": "shh", "r": "rrr",
+  "j": "juh", "v": "vvv", "y": "yuh", "w": "wuh", "th": "thh",
+  "z": "zzz", "x": "ks", "qu": "kwuh", "ch": "chuh", "ng": "ng",
+  "ay": "ay", "ee": "ee", "igh": "igh", "ow": "oh", "oo": "oo",
+  "oo_short": "oo", "ar": "ar", "or": "or", "air": "air",
+  "ir": "er", "ou": "ow", "oy": "oy", "ea": "ee", "oi": "oy",
+  "a-e": "ay", "i-e": "igh", "o-e": "oh", "u-e": "yoo",
+  "aw": "aw", "are": "air", "ur": "er", "er": "er",
+  "ow_cow": "ow", "ai": "ay", "oa": "oh", "ew": "yoo",
+  "ire": "ire", "ear": "ear", "ure": "yoor",
+  // Words — use the word itself
+  "word_mat": "mat", "word_ant": "ant", "word_sun": "sun",
+  "word_dog": "dog", "word_tap": "tap", "word_in": "in",
+  "word_net": "net", "word_pin": "pin", "word_got": "got",
+  "word_on": "on", "word_cat": "cat", "word_kit": "kit",
+  "word_up": "up", "word_bat": "bat", "word_fun": "fun",
+  "word_egg": "egg", "word_lip": "lip", "word_hat": "hat",
+  "word_ship": "ship", "word_run": "run", "word_jam": "jam",
+  "word_van": "van", "word_yes": "yes", "word_wet": "wet",
+  "word_the": "the", "word_zip": "zip", "word_fox": "fox",
+  "word_quiz": "quiz", "word_chip": "chip", "word_ring": "ring",
+};
+
+// ── Accent state (shared singleton) ──────────────────────────
+// Updated by setAudioAccent() called from SpeechContext on accent change
+let currentAccent: "en-GB" | "en-US" = 
+  (typeof localStorage !== "undefined" 
+    ? (localStorage.getItem("rwi-accent") as "en-GB" | "en-US") 
+    : null) || "en-GB";
+
+export function setAudioAccent(accent: "en-GB" | "en-US") {
+  currentAccent = accent;
+}
+
+export function getAudioAccent(): "en-GB" | "en-US" {
+  return currentAccent;
+}
+
 // ── Audio playback engine ─────────────────────────────────────
 let currentAudio: HTMLAudioElement | null = null;
-const audioCache = new Map<string, HTMLAudioElement>();
+
+// Cache blob:// URLs so we only fetch each file once
+const blobUrlCache = new Map<string, string>();
+// Track in-flight fetches to avoid duplicate requests
+const fetchInFlight = new Map<string, Promise<string>>();
 
 /**
- * Play a pre-generated ElevenLabs phonics sound from CDN.
- * Stops any currently playing audio first.
+ * Fetch a CDN audio URL and return a blob:// URL with the correct audio/mpeg
+ * MIME type. This is necessary because the CDN serves files as
+ * application/octet-stream, which Safari and some mobile browsers refuse to
+ * play as audio.
  */
-export function playPhonicsAudio(key: string): Promise<void> {
-  const url = AUDIO_MAP[key];
-  if (!url) return Promise.resolve();
+async function getBlobUrl(cdnUrl: string, key: string): Promise<string> {
+  if (blobUrlCache.has(key)) return blobUrlCache.get(key)!;
+  if (fetchInFlight.has(key)) return fetchInFlight.get(key)!;
 
-  // Stop current audio
-  if (currentAudio && !currentAudio.paused) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-  }
+  const promise = fetch(cdnUrl)
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.arrayBuffer();
+    })
+    .then(buf => {
+      const blob = new Blob([buf], { type: "audio/mpeg" });
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrlCache.set(key, blobUrl);
+      fetchInFlight.delete(key);
+      return blobUrl;
+    })
+    .catch(err => {
+      fetchInFlight.delete(key);
+      throw err;
+    });
 
-  let audio = audioCache.get(key);
-  if (!audio) {
-    audio = new Audio(url);
-    audio.preload = "auto";
-    audioCache.set(key, audio);
-  }
+  fetchInFlight.set(key, promise);
+  return promise;
+}
 
-  currentAudio = audio;
-  audio.currentTime = 0;
-
-  return audio.play().catch((err) => {
-    console.warn(`Audio playback blocked for "${key}":`, err);
+/**
+ * Speak a phonics key using the Web Speech API (American English or fallback).
+ */
+function speakWithWebSpeech(key: string, lang: "en-GB" | "en-US"): Promise<void> {
+  return new Promise((resolve) => {
+    if (!("speechSynthesis" in window)) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const text = SOUND_TEXT_MAP[key] || key;
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = lang;
+    utt.rate = 0.75;
+    utt.pitch = 1.1;
+    // Try to find a matching voice
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v => v.lang === lang)
+      || voices.find(v => v.lang.startsWith(lang.split("-")[0]))
+      || null;
+    if (voice) utt.voice = voice;
+    utt.onend = () => resolve();
+    utt.onerror = () => resolve();
+    window.speechSynthesis.speak(utt);
   });
 }
 
 /**
- * Preload a batch of audio keys into the browser cache
+ * Play a pre-generated ElevenLabs phonics sound from CDN (British English),
+ * OR use Web Speech API for American English.
+ *
+ * Strategy:
+ *   en-GB → ElevenLabs CDN blob URL (Alice voice, fixes Safari MIME type)
+ *   en-US → Web Speech API with en-US voice
+ *
+ * Stops any currently playing audio first.
+ */
+export async function playPhonicsAudio(key: string): Promise<void> {
+  const accent = currentAccent;
+
+  // Stop any currently playing audio
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+
+  // American English: use Web Speech API
+  if (accent === "en-US") {
+    await speakWithWebSpeech(key, "en-US");
+    return;
+  }
+
+  // British English: use ElevenLabs CDN
+  const url = AUDIO_MAP[key];
+  if (!url) {
+    // Key not in CDN map — fall back to Web Speech API with en-GB
+    await speakWithWebSpeech(key, "en-GB");
+    return;
+  }
+
+  try {
+    const blobUrl = await getBlobUrl(url, key);
+    const audio = new Audio(blobUrl);
+    currentAudio = audio;
+    await audio.play();
+  } catch (blobErr) {
+    // Blob approach failed — try direct CDN URL
+    console.warn(`Blob fetch failed for "${key}", trying direct URL:`, blobErr);
+    try {
+      const audio = new Audio(url);
+      currentAudio = audio;
+      await audio.play();
+    } catch (directErr) {
+      // Both CDN approaches failed — fall back to Web Speech API
+      console.warn(`CDN audio failed for "${key}", falling back to Web Speech:`, directErr);
+      await speakWithWebSpeech(key, "en-GB");
+    }
+  }
+}
+
+/**
+ * Preload a batch of audio keys — fetches and caches blob URLs in the
+ * background so they are ready for instant playback.
+ * Only preloads for British English (CDN); American English uses Web Speech API.
  */
 export function preloadAudio(keys: string[]) {
+  if (currentAccent === "en-US") return; // Web Speech API needs no preloading
   keys.forEach(key => {
     const url = AUDIO_MAP[key];
-    if (url && !audioCache.has(key)) {
-      const audio = new Audio(url);
-      audio.preload = "auto";
-      audioCache.set(key, audio);
+    if (url && !blobUrlCache.has(key) && !fetchInFlight.has(key)) {
+      getBlobUrl(url, key).catch(() => { /* ignore preload errors */ });
     }
   });
 }
@@ -154,5 +292,9 @@ export function stopAudio() {
   if (currentAudio && !currentAudio.paused) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
+  }
+  currentAudio = null;
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
   }
 }
