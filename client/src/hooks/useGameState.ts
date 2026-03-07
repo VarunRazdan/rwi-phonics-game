@@ -7,6 +7,7 @@ export type GameMode = "home" | "sound-quiz" | "word-builder" | "sound-match" | 
 
 export interface GameState {
   mode: GameMode;
+  prevMode: GameMode; // the game mode before transitioning to "results"
   score: number;
   total: number;
   streak: number;
@@ -17,6 +18,7 @@ export interface GameState {
 export function useGameState() {
   const [state, setState] = useState<GameState>({
     mode: "home",
+    prevMode: "home",
     score: 0,
     total: 0,
     streak: 0,
@@ -32,9 +34,12 @@ export function useGameState() {
     setState(prev => ({
       ...prev,
       mode,
+      prevMode: mode,
       score: 0,
       total: 0,
       streak: 0,
+      bestStreak: 0,
+      stars: 0,
     }));
   }, []);
 
@@ -57,7 +62,7 @@ export function useGameState() {
     setState(prev => {
       const pct = prev.total > 0 ? prev.score / prev.total : 0;
       const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : 1;
-      return { ...prev, mode: "results", stars };
+      return { ...prev, prevMode: prev.mode, mode: "results", stars };
     });
   }, []);
 

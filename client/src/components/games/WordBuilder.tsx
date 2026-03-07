@@ -1,10 +1,12 @@
 // ============================================================
-// WordBuilder — Drag/tap letters to build words
-// Playful Brutalism Design System
+// WordBuilder — Tap letters to build words
+// Supports Set 1, 2, 3 | ElevenLabs CDN audio
+// Design: Playful Brutalism
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { WORD_BUILD_CHALLENGES, getTileColor } from "@/lib/phonicsData";
+import { WORD_BUILD_CHALLENGES, getTileColor, type SoundSet } from "@/lib/phonicsData";
+import { playPhonicsAudio, AUDIO_MAP } from "@/lib/audioMap";
 import OwlMascot from "@/components/OwlMascot";
 import ProgressBar from "@/components/ProgressBar";
 
@@ -12,6 +14,7 @@ interface WordBuilderProps {
   onScore: (correct: boolean) => void;
   onFinish: () => void;
   score: number;
+  soundSet?: SoundSet;
 }
 
 const QUESTIONS_PER_ROUND = 8;
@@ -20,8 +23,10 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-export default function WordBuilder({ onScore, onFinish, score }: WordBuilderProps) {
-  const [challenges] = useState(() => shuffle(WORD_BUILD_CHALLENGES).slice(0, QUESTIONS_PER_ROUND));
+export default function WordBuilder({ onScore, onFinish, score, soundSet = 1 }: WordBuilderProps) {
+  const setChallenges = WORD_BUILD_CHALLENGES.filter(c => c.set === soundSet);
+  const allChallenges = setChallenges.length >= 4 ? setChallenges : WORD_BUILD_CHALLENGES.filter(c => c.set <= soundSet);
+  const [challenges] = useState(() => shuffle(allChallenges).slice(0, Math.min(QUESTIONS_PER_ROUND, allChallenges.length)));
   const [current, setCurrent] = useState(0);
   const [shuffledLetters, setShuffledLetters] = useState<string[]>([]);
   const [placed, setPlaced] = useState<(string | null)[]>([]);
@@ -55,6 +60,9 @@ export default function WordBuilder({ onScore, onFinish, score }: WordBuilderPro
     const firstEmpty = placed.findIndex(p => p === null);
     if (firstEmpty === -1) return;
 
+    // Play the letter sound
+    playPhonicsAudio(letter);
+
     const newPlaced = [...placed];
     newPlaced[firstEmpty] = letter;
     const newUsed = new Set(usedIndices);
@@ -69,6 +77,14 @@ export default function WordBuilder({ onScore, onFinish, score }: WordBuilderPro
       setChecking(true);
       onScore(correct);
 
+      // Play the word audio
+      const wordKey = `word_${challenge.word}`;
+      setTimeout(() => {
+        if (AUDIO_MAP[wordKey]) {
+          playPhonicsAudio(wordKey);
+        }
+      }, 300);
+
       if (correct) {
         setOwlState("correct");
         setOwlMessage(`Brilliant! You spelled "${challenge.word}"! 🎉`);
@@ -78,14 +94,14 @@ export default function WordBuilder({ onScore, onFinish, score }: WordBuilderPro
       }
 
       setTimeout(() => {
-        if (current + 1 >= QUESTIONS_PER_ROUND) {
+        if (current + 1 >= challenges.length) {
           onFinish();
         } else {
           setCurrent(c => c + 1);
         }
       }, 2000);
     }
-  }, [checking, usedIndices, placed, challenge, current, onScore, onFinish]);
+  }, [checking, usedIndices, placed, challenge, current, challenges.length, onScore, onFinish]);
 
   const handleRemoveLetter = useCallback((slotIdx: number) => {
     if (checking || placed[slotIdx] === null) return;
@@ -109,7 +125,7 @@ export default function WordBuilder({ onScore, onFinish, score }: WordBuilderPro
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg mx-auto">
-      <ProgressBar current={current} total={QUESTIONS_PER_ROUND} score={score} />
+      <ProgressBar current={current} total={challenges.length} score={score} />
 
       {/* Hint card */}
       <AnimatePresence mode="wait">
@@ -129,7 +145,7 @@ export default function WordBuilder({ onScore, onFinish, score }: WordBuilderPro
             {challenge.hint}
           </p>
           <p className="font-nunito text-xs opacity-60" style={{ color: tileColor.text }}>
-            {challenge.letters.length} letters
+            {challenge.letters.length} letter{challenge.letters.length !== 1 ? "s" : ""}
           </p>
         </motion.div>
       </AnimatePresence>

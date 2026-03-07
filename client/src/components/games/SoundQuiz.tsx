@@ -1,17 +1,21 @@
 // ============================================================
 // SoundQuiz — "What sound does this letter make?"
-// Playful Brutalism Design System
+// Supports Set 1, 2, 3 | ElevenLabs CDN audio auto-play
+// Design: Playful Brutalism
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SET1_SOUNDS, getTileColor, type PhonicsSound } from "@/lib/phonicsData";
+import { ALL_SOUNDS, getTileColor, type PhonicsSound, type SoundSet } from "@/lib/phonicsData";
+import { playPhonicsAudio } from "@/lib/audioMap";
 import OwlMascot from "@/components/OwlMascot";
 import ProgressBar from "@/components/ProgressBar";
+import SpeakButton from "@/components/SpeakButton";
 
 interface SoundQuizProps {
   onScore: (correct: boolean) => void;
   onFinish: () => void;
   score: number;
+  soundSet?: SoundSet;
 }
 
 const QUESTIONS_PER_ROUND = 10;
@@ -25,8 +29,9 @@ function getOptions(correct: PhonicsSound, all: PhonicsSound[]): PhonicsSound[] 
   return shuffle([correct, ...wrong]);
 }
 
-export default function SoundQuiz({ onScore, onFinish, score }: SoundQuizProps) {
-  const [questions] = useState(() => shuffle(SET1_SOUNDS).slice(0, QUESTIONS_PER_ROUND));
+export default function SoundQuiz({ onScore, onFinish, score, soundSet = 1 }: SoundQuizProps) {
+  const sounds = ALL_SOUNDS[soundSet];
+  const [questions] = useState(() => shuffle(sounds).slice(0, Math.min(QUESTIONS_PER_ROUND, sounds.length)));
   const [current, setCurrent] = useState(0);
   const [options, setOptions] = useState<PhonicsSound[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -38,19 +43,27 @@ export default function SoundQuiz({ onScore, onFinish, score }: SoundQuizProps) 
 
   useEffect(() => {
     if (q) {
-      setOptions(getOptions(q, SET1_SOUNDS));
+      setOptions(getOptions(q, sounds));
       setSelected(null);
       setOwlState("thinking");
       setOwlMessage("What sound does this letter make?");
       setAnimKey(k => k + 1);
+      // Auto-play the letter sound after a short delay
+      const timer = setTimeout(() => {
+        playPhonicsAudio(q.audioKey);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [current, q]);
+  }, [current, q, sounds]);
 
   const handleAnswer = useCallback((option: PhonicsSound) => {
     if (selected) return;
     setSelected(option.letter);
     const correct = option.letter === q.letter;
     onScore(correct);
+
+    // Play the selected option's sound
+    setTimeout(() => playPhonicsAudio(option.audioKey), 100);
 
     if (correct) {
       setOwlState("correct");
@@ -61,13 +74,13 @@ export default function SoundQuiz({ onScore, onFinish, score }: SoundQuizProps) 
     }
 
     setTimeout(() => {
-      if (current + 1 >= QUESTIONS_PER_ROUND) {
+      if (current + 1 >= questions.length) {
         onFinish();
       } else {
         setCurrent(c => c + 1);
       }
     }, 1800);
-  }, [selected, q, current, onScore, onFinish]);
+  }, [selected, q, current, questions.length, onScore, onFinish]);
 
   if (!q) return null;
 
@@ -75,7 +88,7 @@ export default function SoundQuiz({ onScore, onFinish, score }: SoundQuizProps) 
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg mx-auto">
-      <ProgressBar current={current} total={QUESTIONS_PER_ROUND} score={score} />
+      <ProgressBar current={current} total={questions.length} score={score} />
 
       {/* Main letter card */}
       <AnimatePresence mode="wait">
@@ -92,16 +105,25 @@ export default function SoundQuiz({ onScore, onFinish, score }: SoundQuizProps) 
             style={{ color: tileColor.text }}>
             What sound?
           </p>
-          <span
-            className="font-fredoka-one select-none leading-none"
-            style={{
-              fontSize: "clamp(6rem, 20vw, 9rem)",
-              color: tileColor.text,
-              textShadow: `3px 3px 0 rgba(0,0,0,0.2)`,
-            }}
-          >
-            {q.letter}
-          </span>
+          <div className="flex items-center gap-4">
+            <span
+              className="font-fredoka-one select-none leading-none"
+              style={{
+                fontSize: "clamp(5rem, 18vw, 8rem)",
+                color: tileColor.text,
+                textShadow: `3px 3px 0 rgba(0,0,0,0.2)`,
+              }}
+            >
+              {q.letter}
+            </span>
+            <SpeakButton
+              audioKey={q.audioKey}
+              text={q.sound}
+              label={`Hear the sound ${q.letter}`}
+              variant="white"
+              size="lg"
+            />
+          </div>
           <p className="font-nunito font-semibold text-sm opacity-60"
             style={{ color: tileColor.text }}>
             {q.mnemonic}
@@ -124,7 +146,7 @@ export default function SoundQuiz({ onScore, onFinish, score }: SoundQuizProps) 
 
           return (
             <motion.button
-              key={opt.letter}
+              key={`${opt.letter}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07 }}
@@ -139,7 +161,7 @@ export default function SoundQuiz({ onScore, onFinish, score }: SoundQuizProps) 
               <span className="font-nunito text-sm font-semibold text-gray-600">
                 "{opt.sound}"
               </span>
-              <span className="text-lg">{opt.exampleImage}</span>
+              <span className="text-2xl">{opt.exampleImage}</span>
             </motion.button>
           );
         })}

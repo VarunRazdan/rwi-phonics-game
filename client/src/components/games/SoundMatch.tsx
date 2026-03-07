@@ -1,17 +1,21 @@
 // ============================================================
 // SoundMatch — Match the letter to its example word
-// Playful Brutalism Design System
+// Supports Set 1, 2, 3 | ElevenLabs CDN audio
+// Design: Playful Brutalism
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SET1_SOUNDS, getTileColor } from "@/lib/phonicsData";
+import { ALL_SOUNDS, getTileColor, type SoundSet } from "@/lib/phonicsData";
+import { playPhonicsAudio, AUDIO_MAP } from "@/lib/audioMap";
 import OwlMascot from "@/components/OwlMascot";
 import ProgressBar from "@/components/ProgressBar";
+import SpeakButton from "@/components/SpeakButton";
 
 interface SoundMatchProps {
   onScore: (correct: boolean) => void;
   onFinish: () => void;
   score: number;
+  soundSet?: SoundSet;
 }
 
 const QUESTIONS_PER_ROUND = 10;
@@ -22,22 +26,25 @@ function shuffle<T>(arr: T[]): T[] {
 
 interface MatchQuestion {
   letter: string;
+  audioKey: string;
   correctWord: string;
   correctEmoji: string;
-  options: Array<{ word: string; emoji: string; letter: string }>;
+  options: Array<{ word: string; emoji: string; letter: string; wordAudioKey?: string }>;
 }
 
-export default function SoundMatch({ onScore, onFinish, score }: SoundMatchProps) {
+export default function SoundMatch({ onScore, onFinish, score, soundSet = 1 }: SoundMatchProps) {
+  const sounds = ALL_SOUNDS[soundSet];
   const [questions] = useState<MatchQuestion[]>(() => {
-    const pool = shuffle(SET1_SOUNDS).slice(0, QUESTIONS_PER_ROUND);
+    const pool = shuffle(sounds).slice(0, Math.min(QUESTIONS_PER_ROUND, sounds.length));
     return pool.map(q => {
-      const wrong = shuffle(SET1_SOUNDS.filter(s => s.letter !== q.letter)).slice(0, 3);
+      const wrong = shuffle(sounds.filter(s => s.letter !== q.letter)).slice(0, 3);
       const options = shuffle([
-        { word: q.exampleWord, emoji: q.exampleImage, letter: q.letter },
-        ...wrong.map(w => ({ word: w.exampleWord, emoji: w.exampleImage, letter: w.letter })),
+        { word: q.exampleWord, emoji: q.exampleImage, letter: q.letter, wordAudioKey: q.wordAudioKey },
+        ...wrong.map(w => ({ word: w.exampleWord, emoji: w.exampleImage, letter: w.letter, wordAudioKey: w.wordAudioKey })),
       ]);
       return {
         letter: q.letter,
+        audioKey: q.audioKey,
         correctWord: q.exampleWord,
         correctEmoji: q.exampleImage,
         options,
@@ -58,13 +65,28 @@ export default function SoundMatch({ onScore, onFinish, score }: SoundMatchProps
     setOwlState("thinking");
     setOwlMessage("Which word starts with this sound?");
     setAnimKey(k => k + 1);
-  }, [current]);
+    // Auto-play the letter sound
+    if (q) {
+      const timer = setTimeout(() => {
+        playPhonicsAudio(q.audioKey);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [current, q]);
 
-  const handleAnswer = useCallback((optLetter: string, optWord: string) => {
+  const handleAnswer = useCallback((optLetter: string, optWord: string, wordAudioKey?: string) => {
     if (selected) return;
     setSelected(optLetter);
     const correct = optLetter === q.letter;
     onScore(correct);
+
+    // Play the word audio
+    const wKey = wordAudioKey || `word_${optWord}`;
+    setTimeout(() => {
+      if (AUDIO_MAP[wKey]) {
+        playPhonicsAudio(wKey);
+      }
+    }, 200);
 
     if (correct) {
       setOwlState("correct");
@@ -75,13 +97,13 @@ export default function SoundMatch({ onScore, onFinish, score }: SoundMatchProps
     }
 
     setTimeout(() => {
-      if (current + 1 >= QUESTIONS_PER_ROUND) {
+      if (current + 1 >= questions.length) {
         onFinish();
       } else {
         setCurrent(c => c + 1);
       }
     }, 1800);
-  }, [selected, q, current, onScore, onFinish]);
+  }, [selected, q, current, questions.length, onScore, onFinish]);
 
   if (!q) return null;
 
@@ -89,7 +111,7 @@ export default function SoundMatch({ onScore, onFinish, score }: SoundMatchProps
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg mx-auto">
-      <ProgressBar current={current} total={QUESTIONS_PER_ROUND} score={score} />
+      <ProgressBar current={current} total={questions.length} score={score} />
 
       {/* Letter display */}
       <AnimatePresence mode="wait">
@@ -106,16 +128,24 @@ export default function SoundMatch({ onScore, onFinish, score }: SoundMatchProps
             style={{ color: tileColor.text }}>
             Which word starts with...
           </p>
-          <span
-            className="font-fredoka-one leading-none select-none"
-            style={{
-              fontSize: "clamp(5rem, 18vw, 8rem)",
-              color: tileColor.text,
-              textShadow: `3px 3px 0 rgba(0,0,0,0.2)`,
-            }}
-          >
-            {q.letter}
-          </span>
+          <div className="flex items-center gap-4">
+            <span
+              className="font-fredoka-one leading-none select-none"
+              style={{
+                fontSize: "clamp(5rem, 18vw, 8rem)",
+                color: tileColor.text,
+                textShadow: `3px 3px 0 rgba(0,0,0,0.2)`,
+              }}
+            >
+              {q.letter}
+            </span>
+            <SpeakButton
+              audioKey={q.audioKey}
+              label={`Hear the sound ${q.letter}`}
+              variant="white"
+              size="lg"
+            />
+          </div>
         </motion.div>
       </AnimatePresence>
 
@@ -133,11 +163,11 @@ export default function SoundMatch({ onScore, onFinish, score }: SoundMatchProps
 
           return (
             <motion.button
-              key={opt.letter}
+              key={`${opt.letter}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
-              onClick={() => handleAnswer(opt.letter, opt.word)}
+              onClick={() => handleAnswer(opt.letter, opt.word, opt.wordAudioKey)}
               disabled={!!selected}
               className="brut-card p-5 flex flex-col items-center gap-2 text-center disabled:cursor-not-allowed"
               style={{ background: bgColor }}

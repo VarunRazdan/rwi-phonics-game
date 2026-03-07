@@ -3,12 +3,15 @@
 // Playful Brutalism Design System
 // ============================================================
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 import type { GameState } from "@/hooks/useGameState";
+import type { GameSession } from "@/hooks/useProgress";
 
 interface ResultsScreenProps {
   state: GameState;
   onPlayAgain: () => void;
   onHome: () => void;
+  onRecordSession?: (session: Omit<GameSession, "id" | "date">) => void;
 }
 
 const OWL_CORRECT = "https://d2xsxph8kpxj0f.cloudfront.net/310419663027077078/hWFp5C696d56ZEubd2aADg/rwi-owl-correct-D6EfGvH3GYuyzqurCxtWEq.webp";
@@ -21,10 +24,27 @@ const MESSAGES = [
   { min: 0.9, max: 1.1, text: "AMAZING! Perfect phonics champion!", img: OWL_CORRECT },
 ];
 
-export default function ResultsScreen({ state, onPlayAgain, onHome }: ResultsScreenProps) {
+export default function ResultsScreen({ state, onPlayAgain, onHome, onRecordSession }: ResultsScreenProps) {
   const pct = state.total > 0 ? state.score / state.total : 0;
   const msg = MESSAGES.find(m => pct >= m.min && pct < m.max) || MESSAGES[3];
   const stars = state.stars;
+
+  useEffect(() => {
+    if (onRecordSession && state.mode === "results" && state.total > 0) {
+      const modeMap: Record<string, GameSession["mode"]> = {
+        "sound-quiz": "sound-quiz",
+        "word-builder": "word-builder",
+        "sound-match": "sound-match",
+      };
+      onRecordSession({
+        mode: (modeMap[state.prevMode] || "sound-quiz") as GameSession["mode"],
+        score: state.score,
+        total: state.total,
+        stars,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const confettiColors = ["#0D9488", "#F87171", "#FDE047", "#34D399", "#A78BFA"];
 
