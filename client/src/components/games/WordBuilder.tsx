@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WORD_BUILD_CHALLENGES, getTileColor, type SoundSet } from "@/lib/phonicsData";
-import { playPhonicsAudio, AUDIO_MAP } from "@/lib/audioMap";
+import { playPhonicsAudio, AUDIO_MAP_GB as AUDIO_MAP } from "@/lib/audioMap";
 import OwlMascot from "@/components/OwlMascot";
 import ProgressBar from "@/components/ProgressBar";
 
