@@ -1,99 +1,87 @@
 /**
- * RWI Phonics Audio Map
- *
- * All phoneme sounds generated using eSpeak-NG with correct X-SAMPA phoneme notation
- * based on the official Read Write Inc. pronunciation guide:
- *
- * - Stretchy sounds (m, s, n, f, l, r, v, th, ng, nk, z, sh) are elongated
- * - Bouncy sounds (t, p, k, c, ch, x, d, g, b, j, y, w, qu, h) are short with no 'uh' added
- * - Short vowels (a, e, i, o, u) are short and sharp
- * - Set 2 & 3 long vowels use correct diphthong IPA notation
- *
- * CDN URLs verified from upload log.
+ * Audio map for RWI phonics sounds.
+ * Generated using ElevenLabs Pronunciation Dictionary API with IPA phoneme rules.
+ * Dictionary ID: CZqsWjD1NNOw8EBA7DoP (version: fdapGLKULsPt7NirzRO6)
+ * Voice: Jessica (American English, Playful, Bright)
+ * All CDN URLs verified from upload log.
  */
 
-const BASE = "https://d2xsxph8kpxj0f.cloudfront.net/310419663027077078/hWFp5C696d56ZEubd2aADg";
+const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310419663027077078/hWFp5C696d56ZEubd2aADg";
 
 export const AUDIO_MAP: Record<string, string> = {
-  // ── Set 1: Stretchy sounds (elongated, pure phoneme) ──────────────────────
-  'm':    `${BASE}/m_e60e95e5.mp3`,
-  's':    `${BASE}/s_7d847ea5.mp3`,
-  'n':    `${BASE}/n_4e63d519.mp3`,
-  'f':    `${BASE}/f_a2395d34.mp3`,
-  'l':    `${BASE}/l_970d47f3.mp3`,
-  'r':    `${BASE}/r_0386e957.mp3`,
-  'v':    `${BASE}/v_2ec23850.mp3`,
-  'th':   `${BASE}/th_ecbaa679.mp3`,
-  'ng':   `${BASE}/ng_0ed51ccf.mp3`,
-  'nk':   `${BASE}/nk_28261bac.mp3`,
-  'z':    `${BASE}/z_5c60f467.mp3`,
-  'sh':   `${BASE}/sh_ed87eaf3.mp3`,
-
-  // ── Set 1: Bouncy sounds (short, no 'uh' at end) ─────────────────────────
-  't':    `${BASE}/t_3238f474.mp3`,
-  'p':    `${BASE}/p_7d2c8fcc.mp3`,
-  'k':    `${BASE}/k_7822d993.mp3`,
-  'c':    `${BASE}/c_5e45c360.mp3`,
-  'ch':   `${BASE}/ch_17474dd0.mp3`,
-  'x':    `${BASE}/x_4a3d1010.mp3`,
-  'd':    `${BASE}/d_3c661cb2.mp3`,
-  'g':    `${BASE}/g_d744a9f8.mp3`,
-  'b':    `${BASE}/b_da937eaf.mp3`,
-  'j':    `${BASE}/j_229bd4be.mp3`,
-  'y':    `${BASE}/y_33e08cb8.mp3`,
-  'w':    `${BASE}/w_689bb78f.mp3`,
-  'qu':   `${BASE}/qu_715263e3.mp3`,
-  'h':    `${BASE}/h_cd03c6ae.mp3`,
-
-  // ── Set 1: Short vowels (short and sharp) ────────────────────────────────
-  'a':    `${BASE}/a_816a58bd.mp3`,
-  'e':    `${BASE}/e_48ba630f.mp3`,
-  'i':    `${BASE}/i_8734cbe8.mp3`,
-  'o':    `${BASE}/o_f85d777f.mp3`,
-  'u':    `${BASE}/u_4c3f1d47.mp3`,
-
-  // ── Set 2: Long vowel sounds ──────────────────────────────────────────────
-  'ay':   `${BASE}/ay_258b9a40.mp3`,
-  'ee':   `${BASE}/ee_aa5ac410.mp3`,
-  'igh':  `${BASE}/igh_02a2aa5d.mp3`,
-  'ow':   `${BASE}/ow_64158287.mp3`,
-  'oo':   `${BASE}/oo_3eaa8e6b.mp3`,
-  'oo2':  `${BASE}/oo2_4128f5eb.mp3`,
-  'ar':   `${BASE}/ar_15f6a862.mp3`,
-  'or':   `${BASE}/or_bf740cfa.mp3`,
-  'air':  `${BASE}/air_e3523f7f.mp3`,
-  'ir':   `${BASE}/ir_d8b94cad.mp3`,
-  'ou':   `${BASE}/ou_08abe01b.mp3`,
-  'oy':   `${BASE}/oy_66de93f5.mp3`,
-
-  // ── Set 3: Alternative spellings ─────────────────────────────────────────
-  'ea':   `${BASE}/ea_9801fc67.mp3`,
-  'oi':   `${BASE}/oi_64671cb8.mp3`,
-  'a-e':  `${BASE}/a-e_5e1e9418.mp3`,
-  'i-e':  `${BASE}/i-e_d6a85f2b.mp3`,
-  'o-e':  `${BASE}/o-e_88dbfd29.mp3`,
-  'u-e':  `${BASE}/u-e_2fd97fa0.mp3`,
-  'aw':   `${BASE}/aw_c24a673a.mp3`,
-  'are':  `${BASE}/are_fcbcc05f.mp3`,
-  'ur':   `${BASE}/ur_b8c48870.mp3`,
-  'er':   `${BASE}/er_e25d1a46.mp3`,
-  'ow2':  `${BASE}/ow2_5cf01ca5.mp3`,
-  'ai':   `${BASE}/ai_1374cd9e.mp3`,
-  'oa':   `${BASE}/oa_99b31d13.mp3`,
-  'ew':   `${BASE}/ew_b485d809.mp3`,
-  'ire':  `${BASE}/ire_8f72dded.mp3`,
-  'ear':  `${BASE}/ear_b9d3285c.mp3`,
-  'ure':  `${BASE}/ure_75215860.mp3`,
+  // Set 1 - consonants and short vowels
+  "m":        `${CDN}/m_e1e8b1ec.mp3`,
+  "a":        `${CDN}/a_abf2c4c8.mp3`,
+  "s":        `${CDN}/s_35607b27.mp3`,
+  "d":        `${CDN}/d_c8b62b50.mp3`,
+  "t":        `${CDN}/t_a8ec6293.mp3`,
+  "i":        `${CDN}/i_edb2cf0f.mp3`,
+  "n":        `${CDN}/n_526ad57e.mp3`,
+  "p":        `${CDN}/p_411796c0.mp3`,
+  "g":        `${CDN}/g_eec943d4.mp3`,
+  "o":        `${CDN}/o_8d1ac76b.mp3`,
+  "c":        `${CDN}/c_e0cc5c10.mp3`,
+  "k":        `${CDN}/k_a35b1c3f.mp3`,
+  "u":        `${CDN}/u_497870f1.mp3`,
+  "b":        `${CDN}/b_4b762b10.mp3`,
+  "f":        `${CDN}/f_9e6a9940.mp3`,
+  "e":        `${CDN}/e_43bc03d1.mp3`,
+  "l":        `${CDN}/l_2129aaf5.mp3`,
+  "h":        `${CDN}/h_d15780f6.mp3`,
+  "sh":       `${CDN}/sh_5d78387e.mp3`,
+  "r":        `${CDN}/r_a487c0ca.mp3`,
+  "j":        `${CDN}/j_45192bea.mp3`,
+  "v":        `${CDN}/v_82a4f0f0.mp3`,
+  "y":        `${CDN}/y_5aa6e594.mp3`,
+  "w":        `${CDN}/w_8f861a83.mp3`,
+  "th":       `${CDN}/th_3c3f10ae.mp3`,
+  "z":        `${CDN}/z_665582b1.mp3`,
+  "x":        `${CDN}/x_20823be2.mp3`,
+  "qu":       `${CDN}/qu_bbf50a97.mp3`,
+  "ch":       `${CDN}/ch_5c32fbff.mp3`,
+  "ng":       `${CDN}/ng_3d96bac8.mp3`,
+  // Set 2 - vowel digraphs and long vowels
+  "ay":       `${CDN}/ay_a9cd3206.mp3`,
+  "ee":       `${CDN}/ee_60cf7443.mp3`,
+  "igh":      `${CDN}/igh_dbacc85d.mp3`,
+  "ow":       `${CDN}/ow_6eeefde6.mp3`,
+  "oo":       `${CDN}/oo_ae61a376.mp3`,
+  "oo_short": `${CDN}/oo_short_07a9babe.mp3`,
+  "ar":       `${CDN}/ar_a821a3bd.mp3`,
+  "or":       `${CDN}/or_f76d6d7d.mp3`,
+  "air":      `${CDN}/air_4d117302.mp3`,
+  "ir":       `${CDN}/ir_a0e8941a.mp3`,
+  "ou":       `${CDN}/ou_74cc5f42.mp3`,
+  "oy":       `${CDN}/oy_b9569a32.mp3`,
+  // Set 3 - additional sounds
+  "ea":       `${CDN}/ea_8d159b82.mp3`,
+  "oi":       `${CDN}/oi_0d03d45c.mp3`,
+  "a_e":      `${CDN}/a_e_ef303e54.mp3`,
+  "i_e":      `${CDN}/i_e_9bf16387.mp3`,
+  "o_e":      `${CDN}/o_e_80d325a9.mp3`,
+  "u_e":      `${CDN}/u_e_c248f36b.mp3`,
+  "aw":       `${CDN}/aw_7c353f57.mp3`,
+  "are":      `${CDN}/are_ebfbc32d.mp3`,
+  "ur":       `${CDN}/ur_86d758db.mp3`,
+  "er":       `${CDN}/er_14ef7d80.mp3`,
+  "ow2":      `${CDN}/ow2_e8fc3664.mp3`,
+  "ai":       `${CDN}/ai_977c139d.mp3`,
+  "oa":       `${CDN}/oa_b4cdd11a.mp3`,
+  "ew":       `${CDN}/ew_a948ab38.mp3`,
+  "ire":      `${CDN}/ire_2d2203ec.mp3`,
+  "ear":      `${CDN}/ear_7fac538f.mp3`,
+  "ure":      `${CDN}/ure_537b89d1.mp3`,
+  "wh":       `${CDN}/wh_bc87f6b7.mp3`,
+  "ph":       `${CDN}/ph_5710ba67.mp3`,
+  "tion":     `${CDN}/tion_e69f8ee0.mp3`,
 };
 
-// Cache for blob URLs (avoids re-fetching on repeat plays)
+// Cache for blob URLs to avoid re-fetching
 const blobCache: Record<string, string> = {};
-let currentAudio: HTMLAudioElement | null = null;
 
 /**
  * Play a phonics sound by its audio key.
- * Fetches the CDN MP3 as a blob with correct audio/mpeg MIME type
- * to ensure cross-browser compatibility (Safari, iOS, etc.)
+ * Fetches the CDN audio as a blob (to fix MIME type issues) and plays it.
  */
 export async function playPhonicsAudio(audioKey: string): Promise<void> {
   const url = AUDIO_MAP[audioKey];
@@ -102,28 +90,20 @@ export async function playPhonicsAudio(audioKey: string): Promise<void> {
     return;
   }
 
-  // Stop any currently playing audio
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-    currentAudio = null;
-  }
-
   try {
     // Use cached blob URL if available
     let blobUrl = blobCache[audioKey];
-
     if (!blobUrl) {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const arrayBuffer = await response.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+      const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
       blobUrl = URL.createObjectURL(blob);
       blobCache[audioKey] = blobUrl;
     }
 
     const audio = new Audio(blobUrl);
-    currentAudio = audio;
+    audio.volume = 1.0;
     await audio.play();
   } catch (err) {
     console.error(`Failed to play audio for ${audioKey}:`, err);
