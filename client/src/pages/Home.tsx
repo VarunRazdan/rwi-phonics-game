@@ -17,7 +17,6 @@ import WordBuilder from "@/components/games/WordBuilder";
 import SoundMatch from "@/components/games/SoundMatch";
 import ResultsScreen from "@/components/ResultsScreen";
 import SpeakButton from "@/components/SpeakButton";
-import AccentSelector from "@/components/AccentSelector";
 
 const HERO_BANNER = "https://d2xsxph8kpxj0f.cloudfront.net/310419663027077078/hWFp5C696d56ZEubd2aADg/rwi-hero-banner-L9VUCr5D7K3jzU5CVUo8Bg.webp";
 
@@ -88,13 +87,6 @@ export default function Home() {
             </div>
 
             <div className="flex-1 p-5 flex flex-col gap-4">
-              {/* Accent selector */}
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                className="flex items-center justify-between">
-                <span className="font-nunito font-bold text-sm text-gray-600">Voice accent:</span>
-                <AccentSelector />
-              </motion.div>
-
               {/* Game mode cards */}
               <motion.h2 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
                 className="font-fredoka-one text-2xl text-gray-900">Choose a game:</motion.h2>

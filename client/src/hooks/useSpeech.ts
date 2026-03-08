@@ -1,16 +1,13 @@
 // ============================================================
-// useSpeech — Web Speech API hook for phonics pronunciation
-// Supports en-GB (British) and en-US (American) English
+// useSpeech — Phonics audio hook
+// Uses ElevenLabs CDN audio (American English - Jessica voice)
+// Web Speech API kept as fallback for mnemonic phrases
 // ============================================================
 import { useState, useCallback, useEffect, useRef } from "react";
-import { setAudioAccent } from "@/lib/audioMap";
 
-export type AccentType = "en-GB" | "en-US";
+export type AccentType = "en-US";
 
 export function useSpeech() {
-  const [accent, setAccent] = useState<AccentType>(() => {
-    return (localStorage.getItem("rwi-accent") as AccentType) || "en-GB";
-  });
   const [isSupported, setIsSupported] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
@@ -31,39 +28,12 @@ export function useSpeech() {
     }
   }, []);
 
-  // Sync audioMap singleton on mount (picks up any saved localStorage value)
-  useEffect(() => {
-    const saved = (localStorage.getItem("rwi-accent") as AccentType) || "en-GB";
-    setAudioAccent(saved);
-  }, []);
-
-  const changeAccent = useCallback((newAccent: AccentType) => {
-    setAccent(newAccent);
-    setAudioAccent(newAccent); // keep audioMap singleton in sync
-    localStorage.setItem("rwi-accent", newAccent);
-  }, []);
-
-  /**
-   * Find the best matching voice for the selected accent.
-   * Priority: exact lang match → partial match → any English → default
-   */
-  const getBestVoice = useCallback((targetLang: AccentType): SpeechSynthesisVoice | null => {
+  const getBestVoice = useCallback((): SpeechSynthesisVoice | null => {
     const voices = voicesRef.current;
     if (!voices.length) return null;
-
-    // 1. Exact match (e.g. "en-GB")
-    const exact = voices.find(v => v.lang === targetLang);
-    if (exact) return exact;
-
-    // 2. Partial match (e.g. "en_GB", "en-GB-x-...")
-    const partial = voices.find(v => v.lang.startsWith(targetLang.split("-")[0] + "-" + targetLang.split("-")[1]));
-    if (partial) return partial;
-
-    // 3. Any English
-    const anyEn = voices.find(v => v.lang.startsWith("en"));
-    if (anyEn) return anyEn;
-
-    return null;
+    const usVoice = voices.find(v => v.lang === "en-US");
+    if (usVoice) return usVoice;
+    return voices.find(v => v.lang.startsWith("en")) || null;
   }, []);
 
   /**
@@ -78,11 +48,11 @@ export function useSpeech() {
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = accent;
+    utterance.lang = "en-US";
     utterance.rate = rate;
     utterance.pitch = pitch;
 
-    const voice = getBestVoice(accent);
+    const voice = getBestVoice();
     if (voice) utterance.voice = voice;
 
     utterance.onstart = () => setIsSpeaking(true);
@@ -90,7 +60,7 @@ export function useSpeech() {
     utterance.onerror = () => setIsSpeaking(false);
 
     window.speechSynthesis.speak(utterance);
-  }, [isSupported, accent, getBestVoice]);
+  }, [isSupported, getBestVoice]);
 
   /**
    * Speak a phonics sound with a slow, clear rate for children
@@ -123,8 +93,7 @@ export function useSpeech() {
   return {
     isSupported,
     isSpeaking,
-    accent,
-    changeAccent,
+    accent: "en-US" as AccentType,
     speak,
     speakSound,
     speakWord,

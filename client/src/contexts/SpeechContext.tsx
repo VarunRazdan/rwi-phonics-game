@@ -1,5 +1,6 @@
 // ============================================================
 // SpeechContext — Share speech/TTS state across the whole app
+// Uses ElevenLabs CDN audio (American English)
 // ============================================================
 import { createContext, useContext, type ReactNode } from "react";
 import { useSpeech, type AccentType } from "@/hooks/useSpeech";
@@ -8,7 +9,6 @@ interface SpeechContextValue {
   isSupported: boolean;
   isSpeaking: boolean;
   accent: AccentType;
-  changeAccent: (accent: AccentType) => void;
   speak: (text: string, rate?: number, pitch?: number) => void;
   speakSound: (sound: string) => void;
   speakWord: (word: string) => void;
