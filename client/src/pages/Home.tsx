@@ -193,8 +193,8 @@ function SoundsExplorer({
   sounds: typeof SET1_SOUNDS;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const selectedSound = sounds.find(s => s.letter === selected);
-  const selectedIdx = sounds.findIndex(s => s.letter === selected);
+  const selectedSound = sounds.find(s => s.audioKey === selected);
+  const selectedIdx = sounds.findIndex(s => s.audioKey === selected);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }} className="brut-card p-4">
@@ -221,13 +221,16 @@ function SoundsExplorer({
       <div className="flex flex-wrap gap-2 mb-3">
         {sounds.map((s, i) => {
           const color = getTileColor(i);
-          const isSelected = selected === s.letter;
+          const isSelected = selected === s.audioKey;
           return (
-            <button key={`${s.letter}-${i}`}
-              onClick={() => setSelected(isSelected ? null : s.letter)}
-              className="font-fredoka-one text-lg px-3 py-1 rounded-lg transition-all"
+            <button key={s.audioKey}
+              onClick={() => setSelected(isSelected ? null : s.audioKey)}
+              className="font-fredoka-one text-lg px-3 py-1 rounded-lg transition-all flex flex-col items-center leading-tight"
               style={{ background: isSelected ? color.bg : "white", color: isSelected ? color.text : "#1A1A2E", border: "2px solid #1A1A2E", boxShadow: isSelected ? "3px 3px 0 #1A1A2E" : "2px 2px 0 #1A1A2E", transform: isSelected ? "translate(-1px, -1px)" : "none" }}>
               {s.letter}
+              {s.exampleImage && (s.audioKey === "oo_short" || s.audioKey === "oo" || s.audioKey === "ow" || s.audioKey === "ow_cow") && (
+                <span style={{ fontSize: "0.6rem", opacity: 0.75, fontFamily: "Nunito, sans-serif", fontWeight: 700 }}>{s.exampleWord}</span>
+              )}
             </button>
           );
         })}
@@ -235,7 +238,7 @@ function SoundsExplorer({
 
       <AnimatePresence>
         {selectedSound && (
-          <motion.div key={selectedSound.letter} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+          <motion.div key={selectedSound.audioKey} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
             <div className="rounded-xl p-4 flex items-center gap-4"
               style={{ background: getTileColor(selectedIdx).bg, border: "2px solid #1A1A2E" }}>
               <div className="flex flex-col items-center gap-2">
