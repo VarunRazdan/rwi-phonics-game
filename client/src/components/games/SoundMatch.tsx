@@ -170,7 +170,7 @@ export default function SoundMatch({ onScore, onFinish, score, soundSet = 1 }: S
               onClick={() => handleAnswer(opt.letter, opt.word, opt.wordAudioKey)}
               disabled={!!selected}
               className="brut-card p-5 flex flex-col items-center gap-2 text-center disabled:cursor-not-allowed"
-              style={{ background: bgColor }}
+              style={{ background: bgColor, boxShadow: "5px 5px 0 #1A1A2E" }}
               whileHover={!selected ? { y: -2, boxShadow: "7px 7px 0 #1A1A2E" } : {}}
               whileTap={!selected ? { y: 2, boxShadow: "2px 2px 0 #1A1A2E" } : {}}
             >

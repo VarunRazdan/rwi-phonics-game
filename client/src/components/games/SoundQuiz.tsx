@@ -153,7 +153,7 @@ export default function SoundQuiz({ onScore, onFinish, score, soundSet = 1 }: So
               onClick={() => handleAnswer(opt)}
               disabled={!!selected}
               className="brut-card p-4 flex flex-col items-center gap-1 text-center disabled:cursor-not-allowed"
-              style={{ background: bgColor, borderColor }}
+              style={{ background: bgColor, borderColor, boxShadow: "5px 5px 0 #1A1A2E" }}
               whileHover={!selected ? { y: -2, boxShadow: "7px 7px 0 #1A1A2E" } : {}}
               whileTap={!selected ? { y: 2, boxShadow: "2px 2px 0 #1A1A2E" } : {}}
             >
